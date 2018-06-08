@@ -15,7 +15,7 @@
  * @author  Michael Kölling und David J. Barnes
  * @version 2006.03.30
  */
-
+//luis ist cool lars ist dumm
 class Befehl
 {
     private String befehlswort;
