@@ -1,41 +1,54 @@
-/*
- * Diese Klasse hält eine Aufzählung aller Befehlswörter, die dem
- * Spiel bekannt sind. Mit ihrer Hilfe werden eingetippte Befehle
- * erkannt.
- *
- * @author  Michael Kölling und David J. Barnes
- * @version 2006.03.30
- */
-
-class Befehlswoerter
-{
-    // ein konstantes Array mit den gültigen Befehlswörtern
-    private static final String gueltigeBefehle[] = {
-        "go", "quit", "help", "look"
-    };
-
-    /**
-     * Konstruktor - initialisiere die Befehlswörter.
-     */
+import java.util.HashMap;
+import java.util.Set;
+class Befehlswoerter{
+    
+    private HashMap<String,Befehlswort> gueltigeBefehle; 
+    
+    
+    public String gibBefehlsliste () {
+        String erg="";
+        Set<String> set = gueltigeBefehle.keySet();
+        for (String befehl:set) {
+            erg+=befehl+" ";
+        }
+        return erg;
+    }
+    
     public Befehlswoerter()
     {
-        // nichts zu tun momentan...
+        gueltigeBefehle = new HashMap<String, Befehlswort>();
+        System.out.println(Befehlswort.GO.toString());
+        for (Befehlswort befehl: Befehlswort.values()) {
+            
+            gueltigeBefehle.put(befehl.toString(), befehl);
+            if (befehl!= Befehlswort.UNKNOWN) {
+                //gueltigeBefehle.put(befehl.toString(), befehl);
+            }
+        }
     }
 
+    public Befehlswort gibBefehlswort(String wort)
+    {
+        Befehlswort befehlswort = gueltigeBefehle.get(wort);
+        if(befehlswort != null) {
+            return befehlswort;
+        }
+        else {
+            return Befehlswort.UNKNOWN;
+        }
+    }
+    
     /**
-     * Prüfe, ob eine gegebene Zeichenkette ein gültiger
+     * Prï¿½fe, ob eine gegebene Zeichenkette ein gï¿½ltiger
      * Befehl ist.
-     * @return 'true', wenn die gegebene Zeichenkette ein gültiger
+     * @return 'true', wenn die gegebene Zeichenkette ein gï¿½ltiger
      * Befehl ist, 'false' sonst.
      */
     public boolean istBefehl(String eingabe)
     {
-        for(int i = 0; i < gueltigeBefehle.length; i++) {
-            if(gueltigeBefehle[i].equals(eingabe))
-                return true;
+        if (gueltigeBefehle.get(eingabe)!=null) {
+        return true;
         }
-        // Wenn wir hierher gelangen, wurde die Eingabe nicht
-        // in den Befehlswörter gefunden.
         return false;
     }
 }

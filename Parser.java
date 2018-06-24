@@ -55,12 +55,11 @@ class Parser
         // Jetzt pr�fen, ob der Befehl bekannt ist. Wenn ja, erzeugen
         // wir das passende Befehl-Objekt. Wenn nicht, erzeugen wir
         // einen unbekannten Befehl mit 'null'.
-        if(befehle.istBefehl(wort1)) {
-            return new Befehl(wort1, wort2);
-        }
-        else {
-            return new Befehl(null, wort2);
-        }
+        return new Befehl(befehle.gibBefehlswort(wort1), wort2);
     }
 
+    
+    public String zeigeBefehle () {
+        return befehle.gibBefehlsliste();
+    }
 }

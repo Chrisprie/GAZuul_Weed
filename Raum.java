@@ -16,17 +16,17 @@ class Raum
 {
     public String beschreibung;
     public HashMap<String,Raum> ausgaenge;
-
+    public HashMap<String,Gegenstand>gegenstaende;
     /**
      * Erzeuge einen Raum mit einer Beschreibung. Ein Raum
      * hat anfangs keine Ausg�nge.
      * @param beschreibung enth�lt eine Beschreibung in der Form
      *        "in einer K�che" oder "auf einem Sportplatz".
      */
-    public Raum(String beschreibung) 
-    {
+    public Raum(String beschreibung) {
         this.beschreibung = beschreibung;
-        ausgaenge=new HashMap<String,Raum>();
+        ausgaenge = new HashMap<String,Raum>();
+        gegenstaende = new HashMap<String,Gegenstand>();
     }
 
     /**
@@ -36,11 +36,29 @@ class Raum
      * @param richtung Die richtung durch die man den Raum verlassen kann
      * @param ausgang der entsprechende Ausgang der Richtung
      */
-    public void setzeAusgang(String richtung,Raum nachher) 
-    {
+    public void setzeAusgang(String richtung,Raum nachher) {
         ausgaenge.put(richtung,nachher);
     }
 
+    
+    public void addGegenstand (Gegenstand g) {
+        gegenstaende.put(g.getName(),g);
+    }
+    
+    public Gegenstand getGegenstand (String name) {
+        return gegenstaende.get(name);
+    }
+    
+    public String getGegenstaende () {
+        String erg="Gegenstaende: \n";
+        
+        Set<String> s = gegenstaende.keySet();
+        for (String name:s) {
+            erg+=gegenstaende.get(name)+"\n";
+        }
+        return erg;
+    }
+    
     public String gibAusgaengeAlsString () {
         String erg="Ausgänge: ";
         
@@ -66,7 +84,7 @@ class Raum
     /**
      * @return gibt die Beschreibung und alle Ausgänge als String zurück
      */
-    public String toString() {
-        return gibBeschreibung()+"\n"+gibAusgaengeAlsString();
+    public String gibLangeBeschreibung() {
+        return gibBeschreibung()+"\n"+gibAusgaengeAlsString()+"\n"+getGegenstaende();
     }
 }

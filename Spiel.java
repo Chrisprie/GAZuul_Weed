@@ -1,27 +1,12 @@
-/**
- *  Dies ist die Hauptklasse der Anwendung "Die Welt von Zuul".
- *  "Die Welt von Zuul" ist ein sehr einfaches, textbasiertes
- *  Adventure-Game. Ein Spieler kann sich in einer Umgebung bewegen,
- *  mehr nicht. Das Spiel sollte auf jeden Fall ausgebaut werden,
- *  damit es interessanter wird!
- * 
- *  Zum Spielen muss eine Instanz dieser Klasse erzeugt werden und
- *  an ihr die Methode "spielen" aufgerufen werden.
- * 
- *  Diese Instanz erzeugt und initialisiert alle anderen Objekte
- *  der Anwendung: Sie legt alle R�ume und einen Parser an und
- *  startet das Spiel. Sie wertet auch die Befehle aus, die der
- *  Parser liefert, und sorgt f�r ihre Ausf�hrung.
- * 
- * @author  Michael K�lling und David J. Barnes
- * @version 2006.03.30
- */
-
+import java.util.Stack;
+import java.util.Set;
 class Spiel 
 {
     private Parser parser;
     private Raum aktuellerRaum;
-
+    private Stack<Raum> backStack;
+    private Spieler s;
+    private int zuege;
     /**
      * Erzeuge ein Spiel und initialisiere die interne Raumkarte.
      */
@@ -29,10 +14,12 @@ class Spiel
     {
         raeumeAnlegen();
         parser = new Parser();
+        backStack = new Stack<Raum>();
+        zuege=3;
     }
 
     /**
-     * Erzeuge alle R�ume und verbinde ihre Ausg�nge miteinander.
+     * Erzeuge alle Räume und verbinde ihre Ausg�nge miteinander.
      */
     private void raeumeAnlegen()
     {
@@ -64,7 +51,7 @@ class Spiel
         k[0]="north";k[1]="east";k[2]="south";k[3]="west";
         duenger.setzeAusgang(k[3],farming2);
         farming1.setzeAusgang(k[0],farming2);
-        farming1.setzeAusgang(k[3],kreuzung1);
+        farming1.setzeAusgang(k[2],kreuzung1);
         farming2.setzeAusgang(k[1],duenger);
         farming2.setzeAusgang(k[2],farming1);
         kreuzung1.setzeAusgang(k[0],farming1);
@@ -78,7 +65,7 @@ class Spiel
         main1.setzeAusgang(k[1],main2);
         main1.setzeAusgang(k[3],kreuzung1);
         main2.setzeAusgang(k[1],main3);
-        main2.setzeAusgang(k[2],haus);
+        //main2.setzeAusgang(k[2],haus);
         main2.setzeAusgang(k[3],main1);
         haus.setzeAusgang(k[0],main2);
         main3.setzeAusgang(k[1], kreuzung2);
@@ -97,6 +84,8 @@ class Spiel
         plantage.setzeAusgang(k[1],green2);
         waffe.setzeAusgang(k[0],second2);
 
+        haus.addGegenstand(new Gegenstand("1gegenstand","Ich bin ein Gegenstand",100));
+        s = new Spieler(haus,"Spieler Lars");
         aktuellerRaum = haus;  // das Spiel startet draussen
     }
 
@@ -112,9 +101,12 @@ class Spiel
         // und f�hren sie aus, bis das Spiel beendet wird.
 
         boolean beendet = false;
-        while (! beendet) {
+        while (! beendet && this.zuege>0) {
             Befehl befehl = parser.liefereBefehl();
             beendet = verarbeiteBefehl(befehl);
+        }
+        if (zuege<=0) {
+            System.out.println("Du hast keine Züge mehr!");
         }
         System.out.println("Danke für dieses Spiel. Auf Wiedersehen.");
     }
@@ -125,15 +117,15 @@ class Spiel
     private void willkommenstextAusgeben()
     {
         System.out.println();
-        System.out.println("Willkommen zu Zuul!");
-        System.out.println("Zuul ist ein neues, unglaublich langweiliges Spiel.");
+        System.out.println("Willkommen zu Zuul_Weed!");
+        System.out.println("Dies ist das neueste unglaublichste brillianteste Spiel der Welt");
         System.out.println("Tippen sie 'help', wenn Sie Hilfe brauchen.");
         System.out.println();
         rauminfoausgeben();
     }
 
     private void rauminfoausgeben () {
-        System.out.println(aktuellerRaum);
+        System.out.println(aktuellerRaum.gibLangeBeschreibung());
     }
 
     /**
@@ -145,22 +137,68 @@ class Spiel
     {
         boolean moechteBeenden = false;
 
-        if(befehl.istUnbekannt()) {
+        Befehlswort befehlswort = befehl.gibBefehlswort();
+        
+         if(befehlswort == Befehlswort.UNKNOWN) {
             System.out.println("Ich weiß nicht, was Sie meinen...");
             return false;
-        }
-
-        String befehlswort = befehl.gibBefehlswort();
-        if (befehlswort.equals("help"))
+        }else if (befehlswort == Befehlswort.HELP)
             hilfstextAusgeben();
-        else if (befehlswort.equals("go"))
+        else if (befehlswort == Befehlswort.GO)
             wechsleRaum(befehl);
-        else if (befehlswort.equals("quit")) {
+        else if (befehlswort == Befehlswort.QUIT) {
             moechteBeenden = beenden(befehl);
+        } else if (befehlswort == Befehlswort.LOOK) {
+            umsehen();
+        } else if (befehlswort == Befehlswort.BACK) {
+            back();
+        }else if (befehlswort == Befehlswort.TAKE) {
+            take(befehl.gibZweitesWort());
+        }else if (befehlswort == Befehlswort.DROP) {
+            drop(befehl.gibZweitesWort());
         }
         return moechteBeenden;
     }
 
+    private void drop(String name){
+        if(name == null){
+           System.out.println("welchen Gegenstand meinst du?");
+           return;
+        }
+        Gegenstand g = s.getGegenstand(name);
+        if(g == null){
+            System.out.println("du besitzt diesen Gegenstand nicht");
+            return;
+        }
+        aktuellerRaum.addGegenstand(s.getGegenstand(name));
+        s.removeGegenstand(name);
+    }
+
+    private void take(String name){
+        if(name == null){
+           System.out.println("welchen Gegenstand meinst du?");
+           return;
+        }
+        Gegenstand g = aktuellerRaum.getGegenstand(name);
+        if(g == null){
+            System.out.println("dieser Gegenstand liegt nicht im Raum?");
+            return;
+        }
+        s.addGegenstand(aktuellerRaum.getGegenstand(name));
+        aktuellerRaum.gegenstaende.remove(name);
+    }
+
+    private void back () {
+        if (backStack.isEmpty()) {System.out.println("Ich kann nicht zurück gehen");
+        } else {
+            aktuellerRaum = backStack.pop();
+            System.out.println(aktuellerRaum.gibLangeBeschreibung());
+        }
+    }
+
+    private void umsehen () {
+        System.out.println(aktuellerRaum.gibLangeBeschreibung());
+    }
     // Implementierung der Benutzerbefehle:
 
     /**
@@ -170,13 +208,11 @@ class Spiel
      */
     private void hilfstextAusgeben() 
     {
-        System.out.println("Sie haben sich verlaufen. Sie sind allein.");
-        System.out.println("Sie irren auf dem Unigel�nde herum.");
+        System.out.println("Du musst deinem Kundem die Ware liefern");
+        System.out.println("Du irrst auf schlechten schizophren Badesalzen ahnungslos durch die Stadt");
         System.out.println();
-        System.out.println("Ihnen stehen folgende Befehle zur Verf�gung:");
-        System.out.println("go:     wechselt den Raum");
-        System.out.println("quit:   beendet das Spiel");
-        System.out.println("help:   zeigt die Hilfe an");
+        System.out.println("Dir stehen folgende Befehle zur Verfügung: "+parser.zeigeBefehle());
+        System.out.println("\n"+aktuellerRaum.gibLangeBeschreibung());
     }
 
     /**
@@ -196,14 +232,26 @@ class Spiel
 
         // Wir versuchen den Raum zu verlassen.
         Raum naechsterRaum = aktuellerRaum.ausgaenge.get(befehl.gibZweitesWort());
-        
 
         if (naechsterRaum == null) {
-            System.out.println("Dort ist kein Weg!");
+            System.out.println("Die Stimmen in meinem Kopf verbieten mir diesen Weg!");
         }
         else {
+            backStack.push(aktuellerRaum);
+            boolean erg=false;
+            Set<String> set = naechsterRaum.ausgaenge.keySet();
+            for (String s:set) {
+                if (naechsterRaum.ausgaenge.get(s)==aktuellerRaum) {
+                    erg=true;
+                }
+            }
+            if (!erg) {
+                System.out.println("Das Badesalz hat eine Psychose ausgelöst, sodass du nicht mehr zurück gehen kannst.");
+                backStack.clear();
+            }
             aktuellerRaum = naechsterRaum;
-            System.out.println(aktuellerRaum);
+            zuege--;
+            System.out.println("Du hast noch "+this.zuege+" Züge\n"+aktuellerRaum.gibLangeBeschreibung());
         }
     }
 
